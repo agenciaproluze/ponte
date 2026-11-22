@@ -1,8 +1,8 @@
 {
-  "name": "ponte",
+  "name": "tek4ll",
   "version": "0.1.0",
   "private": true,
-  "description": "Plataforma de colaboração em ciência cidadã para altas habilidades",
+  "description": "Plataforma de colaboração em ciência cidadã para altas habilidades (tek4ll)",
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4"
   }
