@@ -12,7 +12,7 @@ const GUIA_URL = process.env.SITE_URL ? `${process.env.SITE_URL}/#biblioteca` : 
 function boasVindasHtml(nome) {
   return `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#111">
-      <h2>Bem-vindo à Ponte, ${escapar(nome)}!</h2>
+      <h2>Bem-vindo à tek4ll, ${escapar(nome)}!</h2>
       <p><b>Nosso propósito:</b> conectar pessoas com altas habilidades a projetos reais de ciência cidadã.</p>
       <p><b>Nossos valores:</b> curiosidade, colaboração, rigor e respeito a quem participa.</p>
       <p>Seu primeiro guia já está disponível: <a href="https://claude.ai/artifact/2xrXRyuLXVEyR7LmzLTzJt">Primeiros passos com o Claude</a>.</p>
@@ -67,10 +67,10 @@ export default async function handler(req, res) {
     if (eC) return res.status(500).json({ erro: "falha ao registrar consentimento" });
 
     await enviarEmail(b.emailResponsavel,
-      "Autorização registrada: Ponte",
-      `<p>Você autorizou a participação de ${escapar(nome)} na Ponte. Guarde este e-mail como registro.</p>`);
+      "Autorização registrada: tek4ll",
+      `<p>Você autorizou a participação de ${escapar(nome)} na tek4ll. Guarde este e-mail como registro.</p>`);
   }
 
-  await enviarEmail(user.email, "Bem-vindo à Ponte", boasVindasHtml(nome));
+  await enviarEmail(user.email, "Bem-vindo à tek4ll", boasVindasHtml(nome));
   return res.status(200).json({ ok: true });
 }
