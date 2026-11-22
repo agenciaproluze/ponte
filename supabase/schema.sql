@@ -1,4 +1,4 @@
--- Ponte · esquema inicial do banco (Supabase / PostgreSQL)
+-- tek4ll · esquema inicial do banco (Supabase / PostgreSQL)
 -- Rode este arquivo no SQL Editor do Supabase.
 
 -- Perfil público/privado de cada pessoa cadastrada
