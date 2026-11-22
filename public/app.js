@@ -26,7 +26,7 @@ function abrir(aba){ dlg.showModal(); trocarAba(aba||"cad"); }
 function trocarAba(aba){
   document.querySelectorAll(".aba").forEach(b=>b.classList.toggle("on", b.dataset.aba===aba));
   $("formCad").hidden = aba!=="cad"; $("formLogin").hidden = aba!=="login"; $("sucesso").hidden = true;
-  $("tituloDlg").textContent = aba==="cad" ? "Entrar na Ponte" : "Acessar sua conta";
+  $("tituloDlg").textContent = aba==="cad" ? "Entrar na tek4ll" : "Acessar sua conta";
   $("errCad").textContent=""; $("errLogin").textContent="";
 }
 document.querySelectorAll(".aba").forEach(b=>b.addEventListener("click", ()=>trocarAba(b.dataset.aba)));
