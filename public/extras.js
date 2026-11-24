@@ -49,26 +49,18 @@
     const atual = await api("/api/avatar");
     if (atual.ok && atual.dados) { nome.value = atual.dados.nome_ia; genero.value = atual.dados.genero; cabelo.value = atual.dados.cabelo; roupa.value = atual.dados.roupa; cor = atual.dados.cor; prev(); }
 
-    // conversa
-    v.append($e("h2", "", "Converse com sua IA"));
-    const aviso = $e("p", "nota", "Você está conversando com uma inteligência artificial. Conversas podem ser revisadas pela moderação se houver sinal de risco.");
-    const area = $e("div"); area.style.cssText = "border:1px solid #333;border-radius:12px;padding:16px;min-height:200px;max-width:720px";
-    const entrada = $e("input"); entrada.placeholder = "Escreva sua pergunta ou ideia"; entrada.maxLength = 1000;
-    const enviar = $e("button", "btn", "Enviar"); enviar.type = "button";
-    const linha = $e("div"); linha.style.cssText = "display:flex;gap:10px;margin-top:12px;max-width:720px"; entrada.style.flex = "1";
-    linha.append(entrada, enviar);
-    const bolha = (quem, texto) => { const b = $e("p", "", (quem === "ia" ? "IA: " : "Você: ") + texto); b.style.color = quem === "ia" ? "#fff" : "#b5b5b5"; area.append(b); area.scrollTop = area.scrollHeight; };
-    const perguntar = async () => {
-      const t = entrada.value.trim(); if (!t) return;
-      bolha("usuario", t); entrada.value = "";
-      const r = await api("/api/chat", { method: "POST", body: { mensagem: t } });
-      if (r.ok) bolha("ia", r.dados.resumo || r.dados.resposta);
-      else if (r.dados.codigo === "sem_aprovacao") bolha("ia", "Esta conta é de menor de idade. A conversa com a IA começa depois que o responsável aprovar o acesso pelo e-mail enviado.");
-      else bolha("ia", r.dados.erro || "Não consegui responder agora.");
-    };
-    enviar.onclick = perguntar;
-    entrada.onkeydown = e => { if (e.key === "Enter") perguntar(); };
-    v.append(aviso, area, linha);
+    // assistente: em breve
+    v.append($e("h2", "", "Sua assistente de IA"));
+    const card = $e("div", "card");
+    card.style.maxWidth = "720px";
+    card.append(
+      $e("div", "tag", "Em breve"),
+      $e("h3", "", "Uma assistente feita com cuidado"),
+      $e("p", "", "Estamos construindo a assistente com as proteções que crianças e adolescentes merecem: ela só conversa depois que o responsável aprova o acesso, sempre se apresenta como inteligência artificial e encaminha temas de saúde, segurança e direitos para as pessoas certas."),
+      $e("p", "", "Quando estiver disponível, você conversa com ela para transformar ideias em projetos: objetivo, etapas, dados necessários e próximos passos."),
+      $e("p", "nota", "Enquanto isso, você já pode personalizar sua assistente acima.")
+    );
+    v.append(card);
   }
 
   /* ---------- Profissionais ---------- */
