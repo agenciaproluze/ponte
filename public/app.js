@@ -77,7 +77,7 @@ $("formCad").addEventListener("submit", async e=>{
 async function registrarNoServidor(token, nome){
   const body = { nome, nascimento: $("nasc").value, menor: menor() };
   if(menor()){
-    Object.assign(body, { responsavel:$("resp").value.trim(), parentesco:$("parent").value, cpf:$("cpf").value, emailResponsavel:$("emailr").value.trim(), assinatura:$("assin").value.trim() });
+    Object.assign(body, { responsavel:$("resp").value.trim(), parentesco:$("parent").value, cpf:$("cpf").value, emailResponsavel:$("emailr").value.trim(), assinatura:$("assin").value.trim(), autorizado: $("autoriz").checked });
   }
   const r = await fetch("/api/registrar", { method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+token }, body: JSON.stringify(body) });
   if(!r.ok) console.error("registro no servidor falhou");
