@@ -92,52 +92,43 @@
     v.append(form);
   }
 
-  /* ---------- Planos ---------- */
+  /* ---------- Planos (Pix) ---------- */
   function planos(v) {
-    v.append($e("h1", "", "Planos"), $e("p", "sub", "Pague com Pix Automático e ganhe 15% de desconto."));
-    let metodo = "pix";
-    const tog = $e("div", "chips");
-    [["pix", "Pix Automático · 15% off"], ["cartao", "Cartão"]].forEach(([k, t]) => {
-      const b = $e("button", "chip" + (k === metodo ? " on" : ""), t); b.type = "button";
-      b.onclick = () => { metodo = k; [...tog.children].forEach(x => x.classList.toggle("on", x === b)); precos(); };
-      tog.append(b);
-    });
-    v.append(tog);
-    const grade = $e("div", "grid"); v.append(grade);
+    v.append($e("h1", "", "Planos"), $e("p", "sub", "Pagamento por Pix, com 15% de desconto."));
     const PLANOS = [
       { id: "comunidade", nome: "Comunidade", base: 119.9, itens: ["Aulas gravadas", "Desafios e acompanhamento", "Projetos de ciência cidadã"] },
       { id: "ao-vivo", nome: "Ao vivo", base: 189.0, itens: ["Tudo do plano Comunidade", "Aulas e palestras ao vivo", "Perguntas e participação ativa", "Ingressos promocionais em encontros presenciais"] }
     ];
     const fmt = x => "R$ " + x.toFixed(2).replace(".", ",");
-    const cartoes = PLANOS.map(p => {
-      const c = $e("div", "card"); const preco = $e("div", "", ""); preco.style.cssText = "font-size:40px;font-weight:700;margin:10px 0";
+    const grade = $e("div", "grid"); v.append(grade);
+    PLANOS.forEach(p => {
+      const c = $e("div", "card"); const preco = $e("div", "", fmt(p.base * 0.85) + " /mês"); preco.style.cssText = "font-size:40px;font-weight:700;margin:10px 0";
+      const nota = $e("p", "nota", "De " + fmt(p.base) + " com 15% de desconto no Pix.");
       const btn = $e("button", "btn", "Assinar " + p.nome); btn.type = "button";
-      const nota = $e("p", "nota", "");
-      c.append($e("h3", "", p.nome), preco, nota, ...p.itens.map(i => $e("p", "", "✓ " + i)), btn);
+      const saida = $e("div", "nota"); saida.style.marginTop = "12px";
+      c.append($e("h3", "", p.nome), preco, nota, ...p.itens.map(i => $e("p", "", "✓ " + i)), btn, saida);
       btn.onclick = async () => {
-        btn.disabled = true; nota.textContent = "Abrindo pagamento...";
-        const r = await api("/api/checkout", { method: "POST", body: { plano: p.id, metodo } });
+        btn.disabled = true; saida.textContent = "Gerando seu pedido...";
+        const r = await api("/api/checkout", { method: "POST", body: { plano: p.id } });
         btn.disabled = false;
-        if (r.ok && r.dados.url) window.location.href = r.dados.url;
-        else nota.textContent = r.dados.erro || "Não foi possível iniciar o pagamento.";
+        if (r.ok) {
+          saida.textContent = "";
+          saida.append($e("p", "", "Chave Pix: " + r.dados.chave), $e("p", "", "Valor: " + fmt(r.dados.valor)), $e("p", "", "Referência: " + r.dados.referencia), $e("p", "", r.dados.instrucoes));
+        } else saida.textContent = r.dados.erro || "Não foi possível gerar o pedido.";
       };
       grade.append(c);
-      return { p, preco, nota };
     });
-    function precos() {
-      cartoes.forEach(({ p, preco, nota }) => {
-        const valor = metodo === "pix" ? p.base * 0.85 : p.base;
-        preco.textContent = fmt(valor) + " /mês";
-        nota.textContent = metodo === "pix" ? "De " + fmt(p.base) + " com 15% de desconto no Pix Automático." : "Pagamento no cartão, sem desconto.";
-      });
-    }
-    precos();
     const dir = $e("div", "legal");
     dir.style.cssText = "margin-top:40px;font-size:15px;color:#b5b5b5;border-top:1px solid #2a2a2a;padding-top:18px";
     const bt = $e("button", "ghostbtn", "Desistir da contratação (até 7 dias)"); bt.type = "button";
     const r2 = $e("p", "nota", "");
-    bt.onclick = async () => { if (!confirm("Desistir da contratação e pedir o reembolso integral?")) return; const r = await api("/api/arrependimento", { method: "POST" }); r2.textContent = r.dados.mensagem || r.dados.erro; };
-    dir.append($e("p", "", "Você pode desistir da contratação em até 7 dias após a assinatura, com reembolso integral (Código de Defesa do Consumidor, art. 49)."), bt, r2);
+    bt.onclick = async () => {
+      const chave = prompt("Informe sua chave Pix para receber o reembolso integral:");
+      if (!chave) return;
+      const r = await api("/api/arrependimento", { method: "POST", body: { chave_pix: chave } });
+      r2.textContent = r.dados.mensagem || r.dados.erro;
+    };
+    dir.append($e("p", "", "Você pode desistir da contratação em até 7 dias após o pagamento, com reembolso integral (Código de Defesa do Consumidor, art. 49)."), bt, r2);
     v.append(dir);
   }
 
