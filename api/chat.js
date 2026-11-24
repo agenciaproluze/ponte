@@ -20,6 +20,7 @@ export default async function handler(req, res) {
 
   const user = await usuarioDoToken(req);
   if (!user) return res.status(401).json({ erro: "não autenticado" });
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ erro: "A assistente de IA estará disponível em breve.", codigo: "em_breve" });
 
   const mensagem = String((req.body || {}).mensagem ?? "").replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 1000);
   if (mensagem.length < 1) return res.status(400).json({ erro: "mensagem vazia" });
