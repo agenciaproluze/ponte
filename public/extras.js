@@ -278,8 +278,116 @@
     if (r.dados.papel === "admin") extras.push(["equipe", "Equipe"]);
     extras.forEach(([p, t]) => { const a = $e("a", "", t); a.href = "#" + p; a.dataset.p = p; links.append(a); });
   }
+  // Menu da equipe: administração e "ver como" (membro, visitante ou moderador)
+  function menuModerador() {
+    if (!ACESSO.moderador || document.querySelector('.menu a[data-p="admin"]')) return;
+    const links = document.querySelector(".menu .links");
+    const a = $e("a", "", "Administração"); a.href = "#admin"; a.dataset.p = "admin"; links.append(a);
+    const sel = $e("select"); sel.title = "Ver a plataforma como";
+    sel.style.cssText = "background:#000;color:#c6ff00;border:1px solid #c6ff00;border-radius:8px;padding:6px 8px;font-size:14px";
+    [["moderador", "Ver como: Moderador"], ["membro", "Ver como: Membro"], ["visitante", "Ver como: Visitante"]].forEach(([k, t]) => { const o = $e("option", "", t); o.value = k; sel.append(o); });
+    sel.value = MODO_VISAO;
+    sel.onchange = () => { MODO_VISAO = sel.value; sessionStorage.setItem("ponte_visao", MODO_VISAO); rota(); };
+    links.append(sel);
+  }
+
   const appEl = document.getElementById("app");
-  if (appEl) new MutationObserver(() => { if (!appEl.hidden) menuAutor(); }).observe(appEl, { attributes: true, attributeFilter: ["hidden"] });
+  if (appEl) new MutationObserver(() => { if (!appEl.hidden) { menuAutor(); menuModerador(); } }).observe(appEl, { attributes: true, attributeFilter: ["hidden"] });
+
+  /* ---------- Administração da plataforma ---------- */
+  const BR = iso => iso ? new Date(iso).toLocaleString("pt-BR") : "—";
+  const linhaTabela = (cols) => { const tr = $e("tr"); cols.forEach(c => { const td = $e("td"); td.style.cssText = "border-bottom:1px solid #222;padding:9px 8px;vertical-align:top;font-size:15px"; if (c instanceof Node) td.append(c); else td.textContent = c; tr.append(td); }); return tr; };
+  const tabela = (cabecalho, linhas) => { const t = $e("table"); t.style.cssText = "width:100%;border-collapse:collapse;margin-top:12px"; const th = $e("tr"); cabecalho.forEach(c => { const x = $e("th", "", c); x.style.cssText = "text-align:left;color:#c6ff00;padding:9px 8px;border-bottom:1px solid #333;font-size:14px"; th.append(x); }); t.append(th); linhas.forEach(l => t.append(l)); return t; };
+  const botao = (txt, fn) => { const b = $e("button", "chip", txt); b.type = "button"; b.style.marginRight = "6px"; b.onclick = fn; return b; };
+
+  async function adminPainel(v) {
+    v.append($e("h1", "", "Administração"), $e("p", "sub", "Gerencie membros, pagamentos, conteúdo e atendimento da plataforma."));
+    const abas = $e("div", "chips"); v.append(abas);
+    const area = $e("div"); v.append(area);
+    const secoes = [["visao", "Visão geral"], ["assinaturas", "Assinaturas"], ["membros", "Membros"], ["sinalizacoes", "Sinalizações"], ["fichas", "Fichas"], ["relatorios", "Relatórios"]];
+    const abrir = async (sec) => {
+      abas.innerHTML = ""; secoes.forEach(([k, t]) => { const b = $e("button", "chip" + (k === sec ? " on" : ""), t); b.type = "button"; b.onclick = () => abrir(k); abas.append(b); });
+      area.innerHTML = "";
+      if (sec === "visao") return visao();
+      if (sec === "assinaturas") return assinaturas();
+      if (sec === "membros") return membros();
+      if (sec === "sinalizacoes") return sinalizacoes();
+      if (sec === "fichas") return fichas();
+      if (sec === "relatorios") return relatorios();
+    };
+    const erro = (r) => area.append($e("p", "nota", r.dados.erro || "Não foi possível carregar."));
+
+    async function visao() {
+      const r = await api("/api/admin?secao=visao"); if (!r.ok) return erro(r);
+      const d = r.dados;
+      const itens = [["Membros cadastrados", d.membros], ["Assinaturas ativas", d.assinaturas_ativas], ["Pagamentos pendentes", d.pagamentos_pendentes], ["Textos publicados", d.posts_publicados], ["Textos em revisão", d.posts_em_revisao], ["Sinalizações abertas", d.sinalizacoes_abertas], ["Fichas novas", d.fichas_novas]];
+      const g = $e("div", "grid"); area.append(g);
+      itens.forEach(([t, n]) => { const c = $e("div", "card"); c.append($e("div", "tag", t), $e("h3", "", String(n))); g.append(c); });
+      if (!d.assistente_ativa) area.append($e("p", "nota", "A assistente de IA ainda não está ativa (falta a chave da Anthropic). Os relatórios automáticos ficam indisponíveis até lá."));
+    }
+
+    async function assinaturas() {
+      const r = await api("/api/admin?secao=assinaturas"); if (!r.ok) return erro(r);
+      const linhas = r.dados.map(a => linhaTabela([a.nome || a.user_id.slice(0, 8), (a.plano || "") + " · " + (a.metodo || ""), a.status, a.mp_pagamento_id || "—", "Válido até: " + BR(a.valido_ate),
+        (() => { const w = $e("div"); if (a.status !== "ativa" && a.mp_pagamento_id) w.append(botao("Ativar 31 dias", () => mudar({ acao: "assinatura", referencia: a.mp_pagamento_id, status: "ativa" }))); if (a.status === "ativa" && a.mp_pagamento_id) w.append(botao("Cancelar", () => mudar({ acao: "assinatura", referencia: a.mp_pagamento_id, status: "cancelada" }))); return w; })()]));
+      area.append(tabela(["Membro", "Plano", "Status", "Referência", "Validade", "Ações"], linhas));
+      area.append($e("p", "nota", "Pagamentos Pix são conferidos no banco antes de ativar."));
+    }
+    async function mudar(corpo) { const r = await api("/api/admin", { method: "POST", body: corpo }); alert(r.ok ? "Atualizado." : (r.dados.erro || "Erro")); abrir("assinaturas"); }
+
+    async function membros() {
+      const busca = $e("input"); busca.placeholder = "Buscar por nome ou e-mail"; busca.style.cssText = "max-width:420px";
+      const btn = $e("button", "btn", "Buscar"); btn.type = "button"; btn.style.marginLeft = "8px";
+      const res = $e("div"); area.append(busca, btn, res);
+      const carregar = async () => {
+        res.innerHTML = ""; const r = await api("/api/admin?secao=membros&q=" + encodeURIComponent(busca.value.trim()));
+        if (!r.ok) return res.append($e("p", "nota", r.dados.erro || "Erro"));
+        res.append(tabela(["Nome", "E-mail", "Idade", "Assinatura", "Conta", "Ações"], r.dados.map(m => linhaTabela([
+          m.nome || "—", m.email, m.nascimento ? (m.menor ? "Menor de idade" : "Adulto") : "—", m.assinatura + (m.valido_ate ? " · até " + BR(m.valido_ate) : ""), m.suspenso ? "Suspensa" : "Ativa",
+          (() => { const w = $e("div"); w.append(botao(m.suspenso ? "Reativar" : "Suspender", async () => { if (!confirm((m.suspenso ? "Reativar" : "Suspender") + " esta conta?")) return; await mudar({ acao: "membro", user_id: m.id, suspender: !m.suspenso }); })); return w; })()
+        ]))));
+      };
+      btn.onclick = carregar; busca.onkeydown = e => { if (e.key === "Enter") carregar(); };
+      carregar();
+    }
+
+    async function sinalizacoes() {
+      const r = await api("/api/admin?secao=sinalizacoes"); if (!r.ok) return erro(r);
+      if (!r.dados.length) return area.append($e("p", "nota", "Nenhuma sinalização."));
+      const linhas = r.dados.map(s => linhaTabela([BR(s.criado_em), s.gravidade.toUpperCase(), s.motivo, s.trecho ? "“" + s.trecho.slice(0, 120) + "”" : "—", s.status,
+        (() => { const w = $e("div"); ["em_analise", "encaminhada", "arquivada"].forEach(st => w.append(botao(st.replace("_", " "), async () => { const x = await api("/api/admin", { method: "POST", body: { acao: "sinalizacao", id: s.id, status: st } }); if (!x.ok) alert(x.dados.erro); abrir("sinalizacoes"); }))); return w; })()]));
+      area.append(tabela(["Quando", "Gravidade", "Tipo", "Trecho", "Status", "Ações"], linhas));
+      area.append($e("p", "nota", "Casos críticos: siga o protocolo de moderação e denúncia (pasta juridico) antes de arquivar."));
+    }
+
+    async function fichas() {
+      const r = await api("/api/admin?secao=fichas"); if (!r.ok) return erro(r);
+      if (!r.dados.length) return area.append($e("p", "nota", "Nenhuma ficha de profissional ainda."));
+      const linhas = r.dados.map(f => linhaTabela([BR(f.criado_em), f.nome, f.email, f.area, f.interesse, f.status,
+        (() => { const w = $e("div"); ["em_contato", "aprovada", "recusada"].forEach(st => w.append(botao(st.replace("_", " "), async () => { const x = await api("/api/admin", { method: "POST", body: { acao: "ficha", id: f.id, status: st } }); if (!x.ok) alert(x.dados.erro); abrir("fichas"); }))); return w; })()]));
+      area.append(tabela(["Quando", "Nome", "E-mail", "Área", "Interesse", "Status", "Ações"], linhas));
+    }
+
+    function relatorios() {
+      const busca = $e("input"); busca.placeholder = "E-mail do membro"; busca.style.cssText = "max-width:360px";
+      const dia = $e("input"); dia.type = "date"; dia.value = new Date().toISOString().slice(0, 10);
+      const btn = $e("button", "btn", "Gerar relatório do dia"); btn.type = "button"; btn.style.marginLeft = "8px";
+      const saida = $e("div", "card"); saida.style.cssText = "margin-top:14px;display:none";
+      area.append(busca, dia, btn, saida);
+      btn.onclick = async () => {
+        const rb = await api("/api/admin?secao=membros&q=" + encodeURIComponent(busca.value.trim()));
+        const alvo = rb.ok && rb.dados.find(m => m.email.toLowerCase() === busca.value.trim().toLowerCase());
+        if (!alvo) { saida.style.display = "block"; saida.textContent = "Membro não encontrado com esse e-mail."; return; }
+        saida.style.display = "block"; saida.textContent = "Gerando...";
+        const r = await api("/api/admin", { method: "POST", body: { acao: "relatorio", user_id: alvo.id, dia: dia.value } });
+        saida.textContent = r.ok ? r.dados.resumo : (r.dados.erro || "Erro");
+      };
+    }
+
+    abrir("visao");
+  }
+  PAGINAS.admin = adminPainel;
+
 
   PAGINAS.escrever = escrever;
   PAGINAS.revisao = revisao;

@@ -228,17 +228,19 @@ function perfil(v){
   v.append(salvar, sair);
 }
 const PAGINAS={inicio,noticias,cursos,biblioteca,pesquisas,projetos,perfil};
-const LIBERADAS_SEM_ASSINATURA=["planos","perfil","escrever","revisao","equipe"];
+const LIBERADAS_SEM_ASSINATURA=["planos","perfil","escrever","revisao","equipe","admin"];
+let MODO_VISAO = sessionStorage.getItem("ponte_visao") || "moderador";
+function temAcesso(){ if(MODO_VISAO==="membro") return true; if(MODO_VISAO==="visitante") return false; return !!ACESSO.ativo; }
 function rota(){
   let p=(location.hash||"#inicio").slice(1);
-  if(!ACESSO.ativo && !LIBERADAS_SEM_ASSINATURA.includes(p)){
+  if(!temAcesso() && !LIBERADAS_SEM_ASSINATURA.includes(p)){
     if(p!=="inicio") location.hash="#planos";
     p="planos";
   }
   const pg=PAGINAS[p]?p:"inicio";
   document.querySelectorAll(".menu a").forEach(a=>a.classList.toggle("on", a.dataset.p===pg));
   const v=$("view"); v.innerHTML="";
-  if(!ACESSO.ativo){ const aviso=h("div","nota","Ative sua assinatura para acessar cursos, notícias, projetos e a assistente. Pagamento por Pix, com 15% de desconto."); aviso.style.cssText="border:1px solid #c6ff00;border-radius:12px;padding:14px 16px;margin-bottom:18px;color:#fff"; v.append(aviso); }
+  if(!temAcesso()){ const aviso=h("div","nota","Ative sua assinatura para acessar cursos, notícias, projetos e a assistente. Pagamento por Pix, com 15% de desconto."); aviso.style.cssText="border:1px solid #c6ff00;border-radius:12px;padding:14px 16px;margin-bottom:18px;color:#fff"; v.append(aviso); }
   PAGINAS[pg](v); window.scrollTo(0,0);
 }
 window.addEventListener("hashchange", rota);
