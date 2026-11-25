@@ -1,10 +1,13 @@
-// Pagamento via Pix (manual, por enquanto). A pessoa recebe a chave Pix e a referência.
-// A equipe confirma o recebimento no banco e ativa a assinatura pela área de moderação (api/admin-assinatura.js).
+// Gera o pedido Pix: valor com 15% de desconto, código copia e cola e QR Code.
+// A ativação continua manual (api/admin-assinatura.js) até ligarmos um provedor de cobrança recorrente.
+import QRCode from "qrcode";
+import crypto from "node:crypto";
 import { admin, usuarioDoToken } from "./_lib.js";
+import { pixCopiaCola } from "./_pix.js";
 
 const PLANOS = {
-  comunidade: { titulo: "Comunidade", preco: 119.9 },
-  "ao-vivo": { titulo: "Ao vivo", preco: 189.0 }
+  comunidade: { titulo: "Comunidade", preco: 119.9, codigo: "COM" },
+  "ao-vivo": { titulo: "Ao vivo", preco: 189.0, codigo: "AOV" }
 };
 
 export default async function handler(req, res) {
@@ -13,22 +16,26 @@ export default async function handler(req, res) {
   const user = await usuarioDoToken(req);
   if (!user) return res.status(401).json({ erro: "entre na sua conta para assinar" });
 
-  const p = PLANOS[(req.body || {}).plano];
+  const plano = (req.body || {}).plano;
+  const p = PLANOS[plano];
   if (!p) return res.status(400).json({ erro: "plano inválido" });
   if (!process.env.PIX_CHAVE) return res.status(503).json({ erro: "pagamento indisponível no momento" });
 
-  // Pix: 15% de desconto
   const valor = Math.round(p.preco * 0.85 * 100) / 100;
-  const referencia = `TEK4LL-${user.id.slice(0, 8).toUpperCase()}-${(req.body.plano || "").toUpperCase().replace("-", "")}`;
+  // Identificador curto e alfanumérico (até 25 caracteres), usado na conciliação
+  const referencia = "TEK4LL" + crypto.randomBytes(4).toString("hex").toUpperCase() + p.codigo;
 
   const { error } = await admin.from("assinaturas").upsert({
-    user_id: user.id, plano: req.body.plano, metodo: "pix", status: "pendente",
+    user_id: user.id, plano, metodo: "pix", status: "pendente",
     mp_pagamento_id: referencia, atualizado_em: new Date().toISOString()
   });
   if (error) return res.status(500).json({ erro: "não foi possível registrar o pedido" });
 
-  return res.status(200).json({
-    plano: p.titulo, valor, chave: process.env.PIX_CHAVE, referencia,
-    instrucoes: `Pague ${valor.toFixed(2).replace(".", ",")} reais por Pix para a chave acima. Na descrição do Pix, escreva ${referencia}. Quando recebermos, sua assinatura é ativada.`
+  const copiaECola = pixCopiaCola({
+    chave: process.env.PIX_CHAVE, valor, txid: referencia,
+    nome: process.env.PIX_NOME || "TEK4LL", cidade: process.env.PIX_CIDADE || "RIO DE JANEIRO"
   });
+  const qr = await QRCode.toDataURL(copiaECola, { width: 300, margin: 1, color: { dark: "#000000", light: "#ffffff" } });
+
+  return res.status(200).json({ plano: p.titulo, valor, referencia, copiaECola, qr });
 }

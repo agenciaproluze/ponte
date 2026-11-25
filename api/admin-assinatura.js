@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   if (!moderadores().includes((user.email || "").toLowerCase())) return res.status(403).json({ erro: "acesso restrito" });
 
   const { referencia, acao } = req.body || {};
-  if (!/^TEK4LL-[A-Z0-9]{8}-[A-Z0-9]+$/.test(String(referencia || ""))) return res.status(400).json({ erro: "referência inválida" });
+  if (!/^TEK4LL[A-F0-9]{8}(COM|AOV)$/.test(String(referencia || ""))) return res.status(400).json({ erro: "referência inválida" });
 
   const { data: ass } = await admin.from("assinaturas").select("user_id,status").eq("mp_pagamento_id", referencia).maybeSingle();
   if (!ass) return res.status(404).json({ erro: "pedido não encontrado" });
