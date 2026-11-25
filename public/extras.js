@@ -85,32 +85,69 @@
   }
 
   /* ---------- Planos (Pix) ---------- */
+  const fmtBRL = x => "R$ " + Number(x).toFixed(2).replace(".", ",");
+
+  // Janela de pagamento: QR Code, código copia e cola e instruções
+  function abrirPagamento(dados) {
+    let janela = document.getElementById("pagamento");
+    if (janela) janela.remove();
+    janela = $e("dialog"); janela.id = "pagamento";
+    janela.style.cssText = "background:#050505;color:#fff;border:1px solid #333;border-radius:18px;width:min(460px,94vw);padding:0";
+    const corpo = $e("div"); corpo.style.padding = "26px";
+    const topo = $e("div"); topo.style.cssText = "display:flex;justify-content:space-between;align-items:center";
+    const x = $e("button", "", "×"); x.style.cssText = "background:none;border:0;color:#b5b5b5;font-size:30px;cursor:pointer";
+    x.onclick = () => janela.close();
+    topo.append($e("h2", "", "Pagar com Pix"), x);
+    const plano = $e("p", "", dados.plano + " · " + fmtBRL(dados.valor) + " /mês (com 15% de desconto)");
+    plano.style.cssText = "color:#c6ff00;font-weight:700;margin:4px 0 14px";
+    const img = $e("img"); img.src = dados.qr; img.alt = "QR Code Pix"; img.style.cssText = "display:block;width:260px;max-width:100%;margin:0 auto;border-radius:12px;background:#fff;padding:10px";
+    const passos = $e("ol"); passos.style.cssText = "color:#d0d0d0;padding-left:20px;font-size:16px;line-height:1.6";
+    ["Abra o app do seu banco e escolha Pix.", "Escaneie o QR Code ou copie o código abaixo.", "Confirme o pagamento. A equipe ativa sua assinatura após a confirmação."].forEach(t => passos.append($e("li", "", t)));
+    const campo = $e("textarea"); campo.readOnly = true; campo.rows = 4; campo.value = dados.copiaECola;
+    campo.style.cssText = "width:100%;background:#000;color:#fff;border:1px solid #444;border-radius:10px;padding:10px;font-size:13px;margin-top:12px";
+    const copiar = $e("button", "btn", "Copiar código Pix"); copiar.type = "button"; copiar.style.width = "100%";
+    const aviso = $e("p", "nota", "");
+    copiar.onclick = async () => {
+      try { await navigator.clipboard.writeText(dados.copiaECola); }
+      catch (e) { campo.select(); document.execCommand("copy"); }
+      aviso.textContent = "Código copiado. Cole no app do seu banco.";
+    };
+    const pronto = $e("button", "ghostbtn", "Já paguei"); pronto.type = "button"; pronto.style.cssText = "width:100%;margin-top:10px";
+    pronto.onclick = () => { aviso.textContent = "Obrigado! Assim que o pagamento for confirmado, sua assinatura será ativada."; };
+    corpo.append(topo, plano, img, passos, campo, copiar, pronto, aviso);
+    janela.append(corpo);
+    document.body.append(janela);
+    janela.showModal();
+  }
+
   function planos(v) {
     v.append($e("h1", "", "Planos"), $e("p", "sub", "Pagamento por Pix, com 15% de desconto."));
     const PLANOS = [
-      { id: "comunidade", nome: "Comunidade", base: 119.9, itens: ["Aulas gravadas", "Desafios e acompanhamento", "Projetos de ciência cidadã"] },
-      { id: "ao-vivo", nome: "Ao vivo", base: 189.0, itens: ["Tudo do plano Comunidade", "Aulas e palestras ao vivo", "Perguntas e participação ativa", "Ingressos promocionais em encontros presenciais"] }
+      { id: "comunidade", nome: "Comunidade", base: 119.9, destaque: false, itens: ["Aulas gravadas", "Desafios e acompanhamento", "Projetos de ciência cidadã"] },
+      { id: "ao-vivo", nome: "Ao vivo", base: 189.0, destaque: true, itens: ["Tudo do plano Comunidade", "Aulas e palestras ao vivo", "Perguntas e participação ativa", "Ingressos promocionais em encontros presenciais"] }
     ];
-    const fmt = x => "R$ " + x.toFixed(2).replace(".", ",");
-    const grade = $e("div", "grid"); v.append(grade);
+    const grade = $e("div"); grade.style.cssText = "display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-top:24px";
     PLANOS.forEach(p => {
-      const c = $e("div", "card"); const preco = $e("div", "", fmt(p.base * 0.85) + " /mês"); preco.style.cssText = "font-size:40px;font-weight:700;margin:10px 0";
-      const nota = $e("p", "nota", "De " + fmt(p.base) + " com 15% de desconto no Pix.");
-      const btn = $e("button", "btn", "Assinar " + p.nome); btn.type = "button";
-      const saida = $e("div", "nota"); saida.style.marginTop = "12px";
-      c.append($e("h3", "", p.nome), preco, nota, ...p.itens.map(i => $e("p", "", "✓ " + i)), btn, saida);
+      const c = $e("div"); c.style.cssText = "background:#0c0c0c;border:" + (p.destaque ? "2px solid #c6ff00" : "1px solid #2a2a2a") + ";border-radius:18px;padding:26px";
+      const nome = $e("h3", "", p.nome); nome.style.cssText = "font-size:22px;margin:0";
+      const preco = $e("div", "", fmtBRL(p.base * 0.85)); preco.style.cssText = "font-size:44px;font-weight:700;margin:12px 0 2px";
+      const per = $e("span", "", " /mês"); per.style.cssText = "font-size:17px;color:#a8a8a8;font-weight:400"; preco.append(per);
+      const de = $e("p", "", "De " + fmtBRL(p.base) + " com 15% de desconto no Pix."); de.style.cssText = "color:#a8a8a8;font-size:15px;margin:0 0 16px";
+      const lista = $e("div"); p.itens.forEach(t => { const l = $e("p", "", "✓  " + t); l.style.cssText = "margin:0 0 8px;color:#e5e5e5;font-size:17px"; lista.append(l); });
+      const btn = $e("button", "btn", "Assinar " + p.nome); btn.type = "button"; btn.style.cssText = "width:100%;margin-top:14px";
+      const msg = $e("p", "nota", ""); msg.style.marginTop = "10px";
       btn.onclick = async () => {
-        btn.disabled = true; saida.textContent = "Gerando seu pedido...";
+        btn.disabled = true; msg.textContent = "Gerando seu pagamento...";
         const r = await api("/api/checkout", { method: "POST", body: { plano: p.id } });
-        btn.disabled = false;
-        if (r.ok) {
-          saida.textContent = "";
-          saida.append($e("p", "", "Chave Pix: " + r.dados.chave), $e("p", "", "Valor: " + fmt(r.dados.valor)), $e("p", "", "Referência: " + r.dados.referencia), $e("p", "", r.dados.instrucoes));
-        } else saida.textContent = r.dados.erro || "Não foi possível gerar o pedido.";
+        btn.disabled = false; msg.textContent = "";
+        if (r.ok) abrirPagamento({ plano: p.nome, valor: r.dados.valor, qr: r.dados.qr, copiaECola: r.dados.copiaECola });
+        else msg.textContent = r.dados.erro || "Não foi possível gerar o pagamento.";
       };
+      c.append(nome, preco, de, lista, btn, msg);
       grade.append(c);
     });
-    const dir = $e("div", "legal");
+    v.append(grade);
+    const dir = $e("div");
     dir.style.cssText = "margin-top:40px;font-size:15px;color:#b5b5b5;border-top:1px solid #2a2a2a;padding-top:18px";
     const bt = $e("button", "ghostbtn", "Desistir da contratação (até 7 dias)"); bt.type = "button";
     const r2 = $e("p", "nota", "");
