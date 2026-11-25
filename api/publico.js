@@ -1,5 +1,5 @@
 // Páginas públicas do blog (/blog, /blog/:slug), sitemap, feed para o painel e anúncios do Google.
-import { admin } from "./_lib.js";
+import { admin } from "../lib/_lib.js";
 
 const SITE = () => (process.env.SITE_URL || "https://ponte-git-main-proluze.vercel.app").replace(/\/$/, "");
 const esc = t => String(t ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

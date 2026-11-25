@@ -1,6 +1,6 @@
 // Conversa com a IA da tek4ll.
 // Menores só conversam com a IA depois que o responsável aprova o acesso.
-import { admin, usuarioDoToken, idadeDe, avaliarRisco, RESPOSTA_CRISE, RESPOSTA_SEGURANCA } from "./_lib.js";
+import { admin, usuarioDoToken, idadeDe, avaliarRisco, RESPOSTA_CRISE, RESPOSTA_SEGURANCA } from "../lib/_lib.js";
 
 const MODELO = "claude-haiku-5-5";
 

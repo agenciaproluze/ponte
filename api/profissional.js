@@ -1,5 +1,5 @@
 // Ficha de interesse de profissionais que querem lecionar ou publicar cursos.
-import { admin, usuarioDoToken, enviarEmail, escapar } from "./_lib.js";
+import { admin, usuarioDoToken, enviarEmail, escapar } from "../lib/_lib.js";
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");

@@ -1,5 +1,5 @@
 // Diz ao site se a conta pode ver o conteúdo: assinatura ativa e dentro do prazo, ou moderador.
-import { admin, usuarioDoToken, moderadores } from "./_lib.js";
+import { admin, usuarioDoToken, moderadores } from "../lib/_lib.js";
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");

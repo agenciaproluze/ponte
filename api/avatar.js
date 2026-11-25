@@ -1,5 +1,5 @@
 // Avatar e nome da IA escolhidos pela pessoa. Valores fora da lista são recusados.
-import { admin, usuarioDoToken } from "./_lib.js";
+import { admin, usuarioDoToken } from "../lib/_lib.js";
 
 const OPC = {
   genero: ["menina", "menino", "neutro"],

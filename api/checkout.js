@@ -2,8 +2,8 @@
 // A ativação continua manual (api/admin-assinatura.js) até ligarmos um provedor de cobrança recorrente.
 import QRCode from "qrcode";
 import crypto from "node:crypto";
-import { admin, usuarioDoToken } from "./_lib.js";
-import { pixCopiaCola } from "./_pix.js";
+import { admin, usuarioDoToken } from "../lib/_lib.js";
+import { pixCopiaCola } from "../lib/_pix.js";
 
 const PLANOS = {
   comunidade: { titulo: "Comunidade", preco: 119.9, codigo: "COM" },

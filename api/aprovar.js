@@ -1,5 +1,5 @@
 // Link enviado ao responsável. Ao clicar, a conversa com a IA é liberada para o menor.
-import { admin, hashToken } from "./_lib.js";
+import { admin, hashToken } from "../lib/_lib.js";
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");

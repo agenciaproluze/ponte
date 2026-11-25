@@ -1,6 +1,6 @@
 // Área de autores do blog: colunistas escrevem, editores aprovam e agendam, admin convida.
 import crypto from "node:crypto";
-import { admin, usuarioDoToken, moderadores } from "./_lib.js";
+import { admin, usuarioDoToken, moderadores } from "../lib/_lib.js";
 
 const TIPOS = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 const MAX_IMG = 2 * 1024 * 1024;

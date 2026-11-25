@@ -1,5 +1,5 @@
 // Direito de arrependimento (CDC, art. 49): até 7 dias após o pagamento, com reembolso integral via Pix.
-import { admin, usuarioDoToken } from "./_lib.js";
+import { admin, usuarioDoToken } from "../lib/_lib.js";
 
 const PRAZO_DIAS = 7;
 const PIX_RE = /^[^\s]{5,100}$/;

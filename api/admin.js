@@ -1,5 +1,5 @@
 // Administração da plataforma. Acesso restrito aos e-mails de MODERADORES.
-import { admin, usuarioDoToken, moderadores } from "./_lib.js";
+import { admin, usuarioDoToken, moderadores } from "../lib/_lib.js";
 
 const ANTHROPIC_OK = () => !!process.env.ANTHROPIC_API_KEY;
 
