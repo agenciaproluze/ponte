@@ -139,7 +139,7 @@ async function sairConta(){
   await sb.auth.signOut();
   $("app").hidden=true;
   document.querySelector("header").style.display="flex";
-  $("home").style.display="flex";
+  $("home").style.display="block";
   location.hash="";
   window.scrollTo(0,0);
 }
