@@ -124,6 +124,144 @@
     v.append(dir);
   }
 
+  /* ---------- Blog: autores, revisão e equipe ---------- */
+  const ESTADO = { papel: null };
+  const STATUS_ROTULO = { rascunho: "Rascunho", revisao: "Em revisão", publicado: "Publicado" };
+
+  function campoTexto(rotulo, el) { const w = $e("div"); w.style.margin = "12px 0"; w.append($e("label", "", rotulo), el); return w; }
+
+  async function escrever(v) {
+    v.append($e("h1", "", "Escrever"), $e("p", "sub", "Escreva, envie para revisão e acompanhe suas publicações no blog."));
+    const titulo = $e("input"); titulo.maxLength = 140; titulo.placeholder = "Título da publicação";
+    const tema = $e("input"); tema.maxLength = 40; tema.placeholder = "Tema (ex.: saúde, tecnologia)";
+    const resumo = $e("textarea"); resumo.rows = 2; resumo.maxLength = 300; resumo.placeholder = "Resumo curto (aparece na lista do blog)";
+    const corpo = $e("textarea"); corpo.rows = 12; corpo.maxLength = 20000; corpo.placeholder = "Texto completo. Separe os parágrafos com uma linha em branco.";
+    const imagemArq = $e("input"); imagemArq.type = "file"; imagemArq.accept = "image/jpeg,image/png,image/webp";
+    const imagemUrl = $e("input"); imagemUrl.placeholder = "Ou cole o endereço (https://...) de uma imagem";
+    const msg = $e("div", "nota"); msg.style.marginTop = "10px";
+    let idEditando = null;
+
+    const form = $e("form"); form.style.maxWidth = "720px";
+    const salvar = $e("button", "btn", "Salvar rascunho"); salvar.type = "submit";
+    const limpar = $e("button", "ghostbtn", "Novo texto"); limpar.type = "button";
+    form.append(campoTexto("Título", titulo), campoTexto("Tema", tema), campoTexto("Resumo", resumo), campoTexto("Texto", corpo), campoTexto("Imagem (JPG, PNG ou WebP, até 2 MB)", imagemArq), campoTexto("Endereço da imagem", imagemUrl), salvar, limpar, msg);
+
+    async function enviarImagem() {
+      const f = imagemArq.files[0];
+      if (!f) return null;
+      if (f.size > 2 * 1024 * 1024) throw new Error("A imagem deve ter até 2 MB.");
+      const base64 = await new Promise((ok, falha) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = falha; r.readAsDataURL(f); });
+      const r = await api("/api/blog", { method: "POST", body: { acao: "imagem", tipo: f.type, dados: base64 } });
+      if (!r.ok) throw new Error(r.dados.erro || "falha ao enviar a imagem");
+      return r.dados.url;
+    }
+    form.onsubmit = async e => {
+      e.preventDefault();
+      msg.textContent = "Salvando...";
+      try {
+        const url = (await enviarImagem()) || imagemUrl.value.trim() || null;
+        const r = await api("/api/blog", { method: "POST", body: { acao: "salvar", id: idEditando, titulo: titulo.value, tema: tema.value, resumo: resumo.value, corpo: corpo.value, imagem_url: url } });
+        if (r.ok) { idEditando = r.dados.id; msg.textContent = "Rascunho salvo. Quando estiver pronto, envie para revisão na lista abaixo."; carregarMeus(); }
+        else msg.textContent = r.dados.erro || "Não foi possível salvar.";
+      } catch (err) { msg.textContent = err.message; }
+    };
+    limpar.onclick = () => { idEditando = null; [titulo, tema, resumo, corpo, imagemUrl].forEach(x => x.value = ""); imagemArq.value = ""; msg.textContent = ""; };
+    v.append(form);
+
+    v.append($e("h2", "", "Meus textos"));
+    const lista = $e("div"); v.append(lista);
+    async function carregarMeus() {
+      const r = await api("/api/blog");
+      lista.innerHTML = "";
+      if (!r.ok) { lista.append($e("p", "nota", r.dados.erro || "Não foi possível carregar.")); return; }
+      if (!r.dados.length) lista.append($e("p", "nota", "Você ainda não tem textos."));
+      r.dados.forEach(p => {
+        const c = $e("div", "card"); c.style.margin = "10px 0"; c.append($e("div", "tag", STATUS_ROTULO[p.status] || p.status), $e("h3", "", p.titulo));
+        if (p.status === "publicado") { const a = $e("a", "", "Ver no blog"); a.href = "/blog/" + (p.slug || ""); a.target = "_blank"; c.append(a); }
+        if (p.status === "rascunho") {
+          const ed = $e("button", "chip", "Editar"); ed.type = "button"; ed.onclick = () => { idEditando = p.id; titulo.value = p.titulo; tema.value = p.tema || ""; resumo.value = p.resumo || ""; corpo.value = p.corpo || ""; imagemUrl.value = p.imagem_url || ""; msg.textContent = "Editando este texto."; window.scrollTo(0, 0); };
+          const env = $e("button", "chip", "Enviar para revisão"); env.type = "button"; env.onclick = async () => { const r2 = await api("/api/blog", { method: "POST", body: { acao: "enviar", id: p.id } }); msg.textContent = r2.ok ? "Enviado para revisão." : r2.dados.erro; carregarMeus(); };
+          const exc = $e("button", "chip", "Excluir"); exc.type = "button"; exc.onclick = async () => { if (!confirm("Excluir este rascunho?")) return; await api("/api/blog", { method: "POST", body: { acao: "excluir", id: p.id } }); carregarMeus(); };
+          c.append(ed, env, exc);
+        }
+        lista.append(c);
+      });
+    }
+    carregarMeus();
+  }
+
+  async function revisao(v) {
+    v.append($e("h1", "", "Revisão"), $e("p", "sub", "Textos enviados pelos colunistas, à espera de aprovação."));
+    const lista = $e("div"); v.append(lista);
+    const r = await api("/api/blog?fila=1");
+    if (!r.ok) { lista.append($e("p", "nota", r.dados.erro || "Somente editores acessam esta página.")); return; }
+    if (!r.dados.length) lista.append($e("p", "nota", "Nenhum texto aguardando revisão."));
+    r.dados.forEach(p => {
+      const c = $e("div", "card"); c.style.margin = "12px 0";
+      c.append($e("div", "tag", (p.tema || "Geral") + " · " + (p.autor_nome || "")), $e("h3", "", p.titulo), $e("p", "", p.resumo || ""));
+      const corpo = $e("details"); corpo.append($e("summary", "", "Ler o texto completo"), $e("div", "", p.corpo));
+      corpo.style.margin = "8px 0";
+      const data = $e("input"); data.type = "datetime-local"; data.title = "Deixe em branco para publicar agora";
+      const aprovar = $e("button", "chip", "Aprovar e publicar"); aprovar.type = "button";
+      const agendar = $e("button", "chip", "Aprovar e agendar"); agendar.type = "button";
+      const devolver = $e("button", "chip", "Devolver ao autor"); devolver.type = "button";
+      const msg = $e("p", "nota", "");
+      aprovar.onclick = async () => { const r2 = await api("/api/blog", { method: "POST", body: { acao: "aprovar", id: p.id } }); msg.textContent = r2.ok ? "Publicado." : r2.dados.erro; if (r2.ok) revisaoRecarrega(); };
+      agendar.onclick = async () => { if (!data.value) { msg.textContent = "Escolha a data e a hora para agendar."; return; } const r2 = await api("/api/blog", { method: "POST", body: { acao: "aprovar", id: p.id, publicar_em: new Date(data.value).toISOString() } }); msg.textContent = r2.ok ? "Agendado." : r2.dados.erro; if (r2.ok) revisaoRecarrega(); };
+      devolver.onclick = async () => { const r2 = await api("/api/blog", { method: "POST", body: { acao: "devolver", id: p.id } }); msg.textContent = r2.ok ? "Devolvido ao autor." : r2.dados.erro; if (r2.ok) revisaoRecarrega(); };
+      c.append(corpo, data, aprovar, agendar, devolver, msg);
+      lista.append(c);
+    });
+    function revisaoRecarrega() { v.innerHTML = ""; revisao(v); }
+  }
+
+  async function equipe(v) {
+    v.append($e("h1", "", "Equipe"), $e("p", "sub", "Convide colunistas e editores. A pessoa precisa ter uma conta na plataforma."));
+    const form = $e("form"); form.style.maxWidth = "560px";
+    const email = $e("input"); email.type = "email"; email.placeholder = "E-mail da conta";
+    const nome = $e("input"); nome.maxLength = 80; nome.placeholder = "Nome que aparece nos textos";
+    const papel = $e("select"); [["colunista", "Colunista (escreve)"], ["editor", "Editor (aprova e agenda)"]].forEach(([k, t]) => { const o = $e("option", "", t); o.value = k; papel.append(o); });
+    const bio = $e("textarea"); bio.rows = 3; bio.maxLength = 400; bio.placeholder = "Uma linha sobre a pessoa (opcional)";
+    const msg = $e("p", "nota", "");
+    const enviar = $e("button", "btn", "Convidar"); enviar.type = "submit";
+    form.append(campoTexto("E-mail", email), campoTexto("Nome público", nome), campoTexto("Papel", papel), campoTexto("Bio", bio), enviar, msg);
+    form.onsubmit = async e => { e.preventDefault(); const r = await api("/api/blog", { method: "POST", body: { acao: "convidar", email: email.value, nome_publico: nome.value, papel: papel.value, bio: bio.value } }); msg.textContent = r.ok ? "Convite feito. A pessoa já pode escrever ou revisar." : (r.dados.erro || "Não foi possível convidar."); };
+    v.append(form);
+  }
+
+  // Menu de autor aparece só para contas de autor
+  async function menuAutor() {
+    if (document.querySelector('.menu a[data-p="escrever"]')) return;
+    const r = await api("/api/blog?papel=1");
+    if (!r.ok || !r.dados.papel) return;
+    ESTADO.papel = r.dados.papel;
+    const links = document.querySelector(".menu .links");
+    const extras = [["escrever", "Escrever"]];
+    if (r.dados.papel === "editor" || r.dados.papel === "admin") extras.push(["revisao", "Revisão"]);
+    if (r.dados.papel === "admin") extras.push(["equipe", "Equipe"]);
+    extras.forEach(([p, t]) => { const a = $e("a", "", t); a.href = "#" + p; a.dataset.p = p; links.append(a); });
+  }
+  const appEl = document.getElementById("app");
+  if (appEl) new MutationObserver(() => { if (!appEl.hidden) menuAutor(); }).observe(appEl, { attributes: true, attributeFilter: ["hidden"] });
+
+  PAGINAS.escrever = escrever;
+  PAGINAS.revisao = revisao;
+  PAGINAS.equipe = equipe;
+
+  // Notícias do painel: posts publicados no blog
+  PAGINAS.noticias = async function (v) {
+    v.append($e("h1", "", "Notícias"), $e("p", "sub", "Publicações do blog da tek4ll."));
+    const r = await fetch("/api/publico?feed=1");
+    const lista = r.ok ? await r.json() : [];
+    if (!lista.length) { v.append($e("p", "nota", "Em breve, novas publicações.")); return; }
+    const g = $e("div", "grid"); v.append(g);
+    lista.forEach(p => {
+      const c = $e("div", "card"); c.append($e("div", "tag", p.tema || "Notícia"), $e("h3", "", p.titulo), $e("p", "", p.resumo || ""), $e("div", "status", (p.autor_nome || "") + " · " + new Date(p.publicado_em).toLocaleDateString("pt-BR")));
+      const a = $e("a", "", "Ler"); a.href = "/blog/" + p.slug; a.target = "_blank"; a.rel = "noopener"; c.append(a);
+      g.append(c);
+    });
+  };
+
   /* ---------- menu e rotas ---------- */
   const links = document.querySelector(".menu .links");
   if (links) [["ia", "Minha IA"], ["profissionais", "Profissionais"], ["planos", "Planos"]].forEach(([p, t]) => {

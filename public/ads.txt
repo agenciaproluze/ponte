@@ -1,0 +1,2 @@
+# Substitua pela linha que o Google AdSense mostra em "Contas > Configurações > ads.txt" depois de aprovar o site.
+# Exemplo de formato: google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0

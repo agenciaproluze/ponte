@@ -111,8 +111,17 @@ async function salvarTemas(lista){
   if(user) await sb.from("perfis").upsert({ id:user.id, temas: lista });
 }
 
+let ACESSO = { ativo: false, moderador: false };
+async function carregarAcesso(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session) return;
+  const r = await fetch("/api/acesso", { headers:{ Authorization:"Bearer "+session.access_token } });
+  ACESSO = r.ok ? await r.json() : { ativo:false, moderador:false };
+}
+
 async function entrarArea(user){
   usuario = (user.user_metadata && user.user_metadata.nome) || user.email;
+  await carregarAcesso();
   dlg.close();
   $("home").style.display="none";
   document.querySelector("header").style.display="none";
@@ -219,11 +228,18 @@ function perfil(v){
   v.append(salvar, sair);
 }
 const PAGINAS={inicio,noticias,cursos,biblioteca,pesquisas,projetos,perfil};
+const LIBERADAS_SEM_ASSINATURA=["planos","perfil","escrever","revisao","equipe"];
 function rota(){
-  const p=(location.hash||"#inicio").slice(1);
+  let p=(location.hash||"#inicio").slice(1);
+  if(!ACESSO.ativo && !LIBERADAS_SEM_ASSINATURA.includes(p)){
+    if(p!=="inicio") location.hash="#planos";
+    p="planos";
+  }
   const pg=PAGINAS[p]?p:"inicio";
   document.querySelectorAll(".menu a").forEach(a=>a.classList.toggle("on", a.dataset.p===pg));
-  const v=$("view"); v.innerHTML=""; PAGINAS[pg](v); window.scrollTo(0,0);
+  const v=$("view"); v.innerHTML="";
+  if(!ACESSO.ativo){ const aviso=h("div","nota","Ative sua assinatura para acessar cursos, notícias, projetos e a assistente. Pagamento por Pix, com 15% de desconto."); aviso.style.cssText="border:1px solid #c6ff00;border-radius:12px;padding:14px 16px;margin-bottom:18px;color:#fff"; v.append(aviso); }
+  PAGINAS[pg](v); window.scrollTo(0,0);
 }
 window.addEventListener("hashchange", rota);
 

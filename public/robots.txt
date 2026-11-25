@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /blog
+Disallow: /api/
+Sitemap: https://ponte-git-main-proluze.vercel.app/sitemap.xml
