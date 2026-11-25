@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>tek4ll — Ciência cidadã para quem pensa grande</title>
 <style>
-:root{--bg:#000;--txt:#fff;--mut:#a8a8a8;--acc:#d4ff3a;--line:#2a2a2a;--panel:#0b0b0b;--err:#ff7b7b}
+:root{--bg:#000;--txt:#fff;--mut:#a8a8a8;--acc:#c6ff00;--p:#ff00c8;--v:#9b1bff;--line:#2a2a2a;--panel:#0b0b0b;--err:#ff7b7b}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--txt);font-family:Arial,Helvetica,sans-serif;font-size:19px;line-height:1.6;min-height:100vh}
 header{display:flex;justify-content:space-between;align-items:center;padding:24px 26px}
@@ -82,6 +82,29 @@ input:focus{outline:none;border-color:var(--acc)}
 .aviso{font-size:14px;color:var(--mut);margin-top:40px;border-top:1px solid var(--line);padding-top:16px}
 #ob .dlg p{color:var(--mut)}
 @media(max-width:640px){.menu .links a{padding:7px 10px;font-size:14px}.wrap h1{font-size:34px}}
+
+.hero{min-height:auto !important;display:block !important;max-width:1080px !important;padding:0 26px 40px !important}
+.sec{padding:64px 0 0}
+.kick{color:var(--acc);font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.08em}
+.hero h1{font-size:clamp(40px,7vw,68px);margin:14px 0 20px}
+.apoio{color:var(--mut);font-size:19px;max-width:680px;margin:0 0 22px}
+.acoes{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.btn.ghost{background:transparent;color:var(--txt);border:1px solid #444}
+.cards3,.cards2{display:grid;gap:18px;margin-top:26px}
+.cards3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.cards2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.hero .card{background:#0c0c0c;border:1px solid #2a2a2a;border-radius:16px;padding:24px;margin:0}
+.hero .card h3{font-size:21px;margin:10px 0 8px}
+.hero .card p{color:var(--mut);margin:0 0 10px;font-size:17px}
+.hero .card p.nota{font-size:14px}
+.faixa{display:inline-block;font-weight:700;font-size:14px;padding:6px 12px;border-radius:999px;color:#000}
+.destaque{border:2px solid var(--acc) !important}
+.selo{display:inline-block;background:var(--p);color:#000;font-weight:700;font-size:13px;padding:5px 10px;border-radius:6px}
+.preco{font-size:40px;font-weight:700;margin:10px 0 4px}
+.preco small{font-size:17px;color:var(--mut);font-weight:400}
+.tracejado{border-style:dashed !important;opacity:.85}
+.tag{font-size:13px;font-weight:700;color:var(--acc);text-transform:uppercase}
+.hero .nota{color:var(--mut);font-size:15px;margin-top:14px}
 </style>
 </head>
 <body>
@@ -91,12 +114,60 @@ input:focus{outline:none;border-color:var(--acc)}
 </header>
 
 <div class="hero" id="home">
-  <h1>tek<span>4ll</span></h1>
-  <p class="slogan">Sua mente merece um problema à altura.</p>
-  <p class="apoio">Uma plataforma de colaboração em ciência cidadã para pessoas com altas habilidades. Projetos reais, pessoas no seu nível e espaço para pensar grande.</p>
-  <div>
-    <button class="btn" id="btnQueroFazer">Quero fazer parte</button>
-  </div>
+  <section class="sec">
+    <div class="kick">Comunidade de ciência cidadã</div>
+    <h1>Mentes de alto potencial, <span>desafios à altura.</span></h1>
+    <p class="slogan">Aulas, desafios, acompanhamento e projetos reais de ciência cidadã, com profissionais e outras pessoas com altas habilidades.</p>
+    <div class="acoes">
+      <button class="btn" id="btnQueroFazer">Quero fazer parte</button>
+      <button class="btn ghost" id="btnEntrarTopo2">Já tenho conta</button>
+    </div>
+  </section>
+
+  <section class="sec" id="perfis">
+    <div class="kick">Perfis</div>
+    <h2>Uma trilha para cada idade</h2>
+    <p class="apoio">Cada perfil tem conteúdo, linguagem e regras de convivência adequados à faixa etária.</p>
+    <div class="cards3">
+      <div class="card"><span class="faixa" style="background:#c6ff00">Infantil · até 12 anos</span><h3>Explorar e descobrir</h3><p>Atividades lúdicas, experimentos e perguntas grandes, sempre com um responsável acompanhando.</p></div>
+      <div class="card"><span class="faixa" style="background:#9b1bff;color:#fff">Juvenil · até 17 anos</span><h3>Projetos e desafios</h3><p>Desafios reais, mentoria e primeiros projetos, com autorização do responsável.</p></div>
+      <div class="card"><span class="faixa" style="background:#ff00c8;color:#fff">Adulto · 18+</span><h3>Pesquisa e liderança</h3><p>Projetos de pesquisa, colaboração com cientistas e liderança de iniciativas de impacto.</p></div>
+    </div>
+    <p class="nota">Avaliações de altas habilidades são feitas por profissionais habilitados. A plataforma não emite diagnósticos.</p>
+  </section>
+
+  <section class="sec" id="planos">
+    <div class="kick">Planos</div>
+    <h2>Escolha como participar</h2>
+    <p class="apoio">Pagamento por Pix, com 15% de desconto. Você faz o cadastro e depois assina pela sua conta.</p>
+    <div class="cards2">
+      <div class="card">
+        <h3>Comunidade</h3>
+        <div class="preco">R$ 101,92<small> /mês</small></div>
+        <p class="nota">De R$ 119,90 com 15% de desconto no Pix.</p>
+        <p>✓ Aulas gravadas</p><p>✓ Desafios e acompanhamento</p><p>✓ Projetos de ciência cidadã</p>
+      </div>
+      <div class="card destaque">
+        <div class="selo">Ao vivo</div>
+        <h3>Tudo + ao vivo</h3>
+        <div class="preco">R$ 160,65<small> /mês</small></div>
+        <p class="nota">De R$ 189,00 com 15% de desconto no Pix.</p>
+        <p>✓ Tudo do plano Comunidade</p><p>✓ Aulas e palestras ao vivo</p><p>✓ Perguntas e participação ativa</p><p>✓ Ingressos promocionais em encontros presenciais</p>
+      </div>
+    </div>
+    <p class="nota">Você pode desistir da contratação em até 7 dias após o pagamento, com reembolso integral (Código de Defesa do Consumidor, art. 49).</p>
+  </section>
+
+  <section class="sec" id="futuro">
+    <div class="kick">Em breve</div>
+    <h2>O que vem por aí</h2>
+    <p class="apoio">A comunidade vai crescer com espaços de troca e de resultados.</p>
+    <div class="cards3">
+      <div class="card tracejado"><div class="tag">Em breve</div><h3>Fóruns</h3><p>Discussões por tema e por perfil, com moderação.</p></div>
+      <div class="card tracejado"><div class="tag">Em breve</div><h3>Debates públicos</h3><p>Conversas abertas com especialistas e convidados.</p></div>
+      <div class="card tracejado"><div class="tag">Em breve</div><h3>Resultados</h3><p>Postagens de projetos concluídos e descobertas da comunidade.</p></div>
+    </div>
+  </section>
 </div>
 
 <div id="app" hidden>

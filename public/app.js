@@ -32,6 +32,7 @@ function trocarAba(aba){
 document.querySelectorAll(".aba").forEach(b=>b.addEventListener("click", ()=>trocarAba(b.dataset.aba)));
 $("btnQueroFazer").addEventListener("click", ()=>abrir("cad"));
 $("btnEntrarTopo").addEventListener("click", ()=>abrir("login"));
+$("btnEntrarTopo2").addEventListener("click", ()=>abrir("login"));
 $("fechar").addEventListener("click", ()=>dlg.close());
 
 function validarCad(){
